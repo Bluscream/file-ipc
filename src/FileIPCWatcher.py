@@ -2,14 +2,7 @@ from time import sleep
 from logging import info, error, warning, debug
 from pathlib import Path
 from watchdog.observers import Observer
-from watchdog.events import LoggingEventHandler, FileSystemEventHandler
-
-import os
-import pprint
-import sys
-import requests
-import json
-import pickle
+from watchdog.events import FileSystemEventHandler
 
 class FileIPCWatcher(object):
     # directory: Path
@@ -50,7 +43,8 @@ class FileIPCWatcher(object):
         with file.open("r") as f: request = f.read().strip()
         if not request: return
         response = None
-        info("%s > Parsed IPC request from %s\n\t%s", self.__class__.__name__, file, request)
+        info("%s > Parsed IPC request from %s", self.__class__.__name__, file)
+        debug(request)
         try: response = eval(request) # self.eval_template.format(request)
         except:
             ret = None; globals = {ret: ""}; locals = {}
@@ -70,9 +64,9 @@ class FileIPCWatcher(object):
         file.unlink()
         with self.response_file.open("w") as f:
             f.write(str(response))
-        info("%s > Acknowledged IPC request from %s\n\t%s", self.__class__.__name__, file, response)
-        if self.queue and len(self.queue) > 0:
-            self.handle_ipc(self.queue.pop(0))
+        info("%s > Acknowledged IPC request from %s\n\t%s", self.__class__.__name__, file)
+        debug(response)
+        if self.queue and len(self.queue) > 0: self.handle_ipc(self.queue.pop(0))
         self.working = False
 
     def on_created(self, event):

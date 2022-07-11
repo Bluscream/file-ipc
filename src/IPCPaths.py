@@ -3,7 +3,6 @@ from logging import info
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from pprint import pprint
 
 class IPCPathsWatcher(object):
     file: Path
@@ -33,7 +32,6 @@ class IPCPathsWatcher(object):
         self.event_handler.on_created = self.onPathsFileCreated
         self.observer.schedule(self.event_handler, self.file.parent, recursive=False)
         info("%s > Created observer for %s", self.__class__.__name__, self.file)
-        pprint(self.observer)
         
     def start(self):
         self.observer.start()
