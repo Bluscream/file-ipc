@@ -1,43 +1,34 @@
-import sys
-import time
-import logging
-from watchdog.observers import Observer
-from watchdog.events import LoggingEventHandler
+from sys import argv
+from time import sleep
+from src.FileIPC import FileIPC
+from pathlib import Path
 
-def checkFile(path):
-    if (path.endswith("__main__.py")):
-        return False
-    if (path.startswith(".\\.git")):
-        return False
-    return True
+testfile = Path(r'C:\Users\blusc\AppData\Roaming\PopstarDevs\2Take1Menu\scripts\request.ipc')
+testfile_disabled = Path(r'C:\Users\blusc\AppData\Roaming\PopstarDevs\2Take1Menu\request.ipc')
 
-def on_created(event):
-    if not checkFile(event.src_path): return
-    print(f"hey, {event.src_path} has been created!")
-def on_deleted(event):
-    if not checkFile(event.src_path): return
-    print(f"what the f**k! Someone deleted {event.src_path}!")
-def on_modified(event):
-    if not checkFile(event.src_path): return
-    print(f"hey buddy, {event.src_path} has been modified")
-def on_moved(event): pass
+def toggleFile(disable: bool = False):
+    src = testfile if disable else testfile_disabled
+    dst = testfile_disabled if disable else testfile
+    try:
+        dst.unlink(missing_ok=True)
+        src.rename(dst)
+    except Exception as ex: print(ex)
+
+# toggleFile(True)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-    path = sys.argv[1] if len(sys.argv) > 1 else '.'
-    event_handler = LoggingEventHandler()
-    event_handler.on_created = on_created
-    event_handler.on_deleted = on_deleted
-    event_handler.on_modified = on_modified
-    event_handler.on_moved = on_moved
-    observer = Observer()
-    observer.schedule(event_handler, path, recursive=True)
-    observer.start()
+    path = argv[1] if len(argv) > 1 else '.'  
+     
+    ipc = FileIPC()
+    
+    # toggleFile()
+    
     try:
         while True:
-            time.sleep(1)
+            sleep(1)
     except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+        ipc.stop()
+
+toggleFile(True)
+        
+    
