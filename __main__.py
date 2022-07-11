@@ -5,9 +5,7 @@ from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
 def checkFile(path):
-    if (path.endswith("__main__.py")):
-        return False
-    return True
+    return not (path.endswith("__main__.py"))
 
 def on_created(event):
     if not checkFile(event.src_path): return
