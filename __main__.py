@@ -7,6 +7,8 @@ from watchdog.events import LoggingEventHandler
 def checkFile(path):
     if (path.endswith("__main__.py")):
         return False
+    if (path.startwith(".\\.git")):
+        return False
     return True
 
 def on_created(event):
