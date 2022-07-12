@@ -1,19 +1,18 @@
-import sys
 from cx_Freeze import setup, Executable
 
-# Dependencies are automatically detected, but it might need fine tuning.
-# "packages": ["os"] is used as example only
-build_exe_options = {}
+# Dependencies are automatically detected, but it might need
+# fine tuning.
+build_options = {'packages': [], 'excludes': []}
 
-# base="Win32GUI" should be used only for Windows GUI app
-base = None
-if sys.platform == "win32":
-    base = "Win32GUI"
+import sys
+base = 'Win32Service' if sys.platform=='win32' else None
 
-setup(
-    name="FileIPC",
-    version="1.0.0",
-    description="File-Based Inter-Process Communication",
-    options={"build_exe": build_exe_options},
-    executables=[Executable("__main__.py")],
-)
+executables = [
+    Executable('__main__.py', base=None, target_name = 'FileIPC')
+]
+
+setup(name='FileIPC',
+      version = '1.0.0',
+      description = 'File-based Inter-process communication',
+      options = {'build_exe': build_options},
+      executables = executables)
