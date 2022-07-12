@@ -58,13 +58,13 @@ class FileIPCWatcher(object):
             # print("=== LOCALS START ===")
             # try: pprint.pprint(locals)
             # except Exception as ex: print(ex)
-            print("=== LOCALS END ===")
+            # print("=== LOCALS END ===")
             try: response = locals["ret"] # if hasattr(locals, "files"):
             except Exception as ex: print(ex) 
         file.unlink()
         with self.response_file.open("w") as f:
-            f.write(str(response))
-        info("%s > Acknowledged IPC request from %s\n\t%s", self.__class__.__name__, file)
+            f.write(str(response).strip())
+        info("%s > Acknowledged IPC request from %s", self.__class__.__name__, file)
         debug(response)
         if self.queue and len(self.queue) > 0: self.handle_ipc(self.queue.pop(0))
         self.working = False
