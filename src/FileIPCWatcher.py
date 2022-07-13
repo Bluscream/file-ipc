@@ -29,6 +29,7 @@ class FileIPCWatcher(object):
         self.event_handler = FileSystemEventHandler()
         self.event_handler.on_created = self.on_created
         self.event_handler.on_deleted = self.on_deleted
+        self.event_handler.on_modified = self.on_modified
         self.observer.schedule(self.event_handler, dir, recursive=False)
         info("%s > Created observer for %s", self.__class__.__name__, dir)
         
@@ -48,7 +49,7 @@ class FileIPCWatcher(object):
             if not request: return
             response = None
             info("%s > Parsed IPC request from %s", self.__class__.__name__, file)
-            debug(request)
+            debug("\"%s\"", request)
             try: response = eval(request) # self.eval_template.format(request)
             except:
                 ret = None; globals = {ret: ""}; locals = {}
@@ -69,7 +70,7 @@ class FileIPCWatcher(object):
             with self.response_file.open("w") as f:
                 f.write(str(response).strip())
             info("%s > Acknowledged IPC request from %s", self.__class__.__name__, file)
-            debug(response)
+            debug("\"%s\"", request)
             if self.queue and len(self.queue) > 0: self.handle_ipc(self.queue.pop(0))
         except Exception as ex:
             error("%s > Error handling IPC request from %s (%s)", self.__class__.__name__, file, ex)
@@ -90,3 +91,6 @@ class FileIPCWatcher(object):
             info("%s > %s has been deleted", self.__class__.__name__, file)
         elif file == self.response_file:
             info("%s > IPC Response acknowledged from %s", self.__class__.__name__, file)
+    def on_modified(self, event):
+        file = Path(event.src_path)
+        info("%s > %s has been modified", self.__class__.__name__, file)
