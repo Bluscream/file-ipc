@@ -4,9 +4,24 @@ from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+class IPCPath():
+    request_file: Path
+    response_file: Path
+    
+    def __init__(self, *args, **kwargs):
+        self.path = Path(*args, **kwargs)
+
+    @staticmethod
+    def from_line(self, line: str) -> None:
+        line = line.split(";")
+        ret = Path([0])
+        ret.request_file = ret.joinpath(line[1] if len(line) > 1 else "request.ipc")
+        ret.response_file = ret.joinpath(line[2] if len(line) > 2 else "response.ipc")
+        return ret
+
 class IPCPathsWatcher(object):
     file: Path
-    paths: list[Path]
+    paths: list[IPCPath]
     observer: Observer
     event_handler: FileSystemEventHandler
     
@@ -62,7 +77,7 @@ class IPCPathsWatcher(object):
                 count = 0
                 for line in f: # f.read().splitlines()
                     count += 1
-                    line = Path(path.expandvars(line.strip()))
+                    line = IPCPath(path.expandvars(line.strip()))
                     if line.exists() or access(line.parent, R_OK):
                         paths.append(line)
                         info("%s > paths[%i] %s", self.__class__.__name__, count, line)
