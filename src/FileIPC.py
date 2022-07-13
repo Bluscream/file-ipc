@@ -14,9 +14,9 @@ class FileIPC():
         self.start()
     
     def create(self):
-        for path in self.pathswatcher.paths:
-            try: self.watchers.append(FileIPCWatcher(path))
-            except Exception as ex: error("[ERROR] %s > Failed to create watcher for %s (%s)", self.__class__.__name__, path, ex)
+        for (dir, request_file, response_file) in self.pathswatcher.paths:
+            try: self.watchers.append(FileIPCWatcher(dir, request_file, response_file))
+            except Exception as ex: error("[ERROR] %s > Failed to create watcher for %s [%s] (%s)", self.__class__.__name__, dir, ', '.join([request_file, response_file]), ex)
         info("%s > Created new instance with %i watchers", self.__class__.__name__, len(self.watchers))
     
     def start(self): info("%s > Started", self.__class__.__name__)

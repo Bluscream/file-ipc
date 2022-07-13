@@ -16,9 +16,9 @@ class FileIPCWatcher(object):
     eval_template =\
 """%s"""
     
-    def __init__(self, dir: Path) -> None:
-        info("%s > Initializing FileIPCWatcher for directory %s", self.__class__.__name__, dir)
-        self.create(dir)
+    def __init__(self, dir: Path, request_file, response_file) -> None:
+        info("%s > Initializing FileIPCWatcher for directory %s [%s]", self.__class__.__name__, dir, ', '.join([request_file, response_file]))
+        self.create(dir, request_file, response_file)
         self.start()
     
     def create(self, dir, request_file="request.ipc", response_file="response.ipc"):

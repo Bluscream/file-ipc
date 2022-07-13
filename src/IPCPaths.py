@@ -21,7 +21,7 @@ class IPCPath():
 
 class IPCPathsWatcher(object):
     file: Path
-    paths: list[IPCPath]
+    paths: list[tuple[Path, str, str]]
     observer: Observer
     event_handler: FileSystemEventHandler
     
@@ -77,9 +77,12 @@ class IPCPathsWatcher(object):
                 count = 0
                 for line in f: # f.read().splitlines()
                     count += 1
-                    line = IPCPath(path.expandvars(line.strip()))
-                    if line.exists() or access(line.parent, R_OK):
-                        paths.append(line)
+                    line = path.expandvars(line.strip()).split(";")
+                    dir = Path(line[0])
+                    request_file = line[1] if len(line) > 1 else "request.ipc"
+                    response_file = line[2] if len(line) > 2 else "response.ipc"
+                    if dir.exists() or access(dir, R_OK):
+                        paths.append((dir, request_file, response_file))
                         info("%s > paths[%i] %s", self.__class__.__name__, count, line)
                     else: info("%s > Path %s does not exist, ignoring", self.__class__.__name__, line)
         # self.paths = paths

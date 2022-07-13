@@ -1,9 +1,9 @@
 # File Based Tool for Inter-process communication
 
-Add your watched directories to `C:\ipc.paths` like so
+Add your watched directories to `C:\ipc.paths` like so; you can provide custom request/response file name by appending them seperated by `;`
 ```
 %userprofile%\Desktop\
-%appdata%\PopstarDevs\2Take1Menu\scripts\ipc
+%appdata%\PopstarDevs\2Take1Menu\scripts\ipc;request.txt;response.txt
 ```
 
 Let your script write your IPC messages as python code to a file called `request.ipc` in one of those paths
