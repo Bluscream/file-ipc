@@ -29,7 +29,7 @@ class FileIPCWatcher(object):
         self.event_handler = FileSystemEventHandler()
         self.event_handler.on_created = self.on_created
         self.event_handler.on_deleted = self.on_deleted
-        self.event_handler.on_modified = self.on_modified
+        # self.event_handler.on_modified = self.on_modified
         self.observer.schedule(self.event_handler, dir, recursive=False)
         info("%s > Created observer for %s", self.__class__.__name__, dir)
         

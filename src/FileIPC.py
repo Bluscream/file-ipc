@@ -9,7 +9,7 @@ class FileIPC():
     watchers: list[FileIPCWatcher] = []
     
     def __init__(self) -> None:
-        basicConfig(level=LOGLEVEL_DEBUG, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        basicConfig(level=LOGLEVEL_INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         self.pathswatcher = IPCPathsWatcher()
         self.create()
         self.start()
