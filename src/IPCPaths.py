@@ -1,10 +1,10 @@
 from os import getenv, path, access, R_OK
-from logging import info
+from logging import info, error
 from pathlib import Path
 import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from IPCPath import IPCPath
+from src.IPCPath import IPCPath
 
 class IPCPathsWatcher(object):
     file: Path
@@ -33,11 +33,11 @@ class IPCPathsWatcher(object):
         self.event_handler.on_deleted = self.onPathsFileDeleted
         self.event_handler.on_created = self.onPathsFileCreated
         self.observer.schedule(self.event_handler, self.file.parent, recursive=False)
-        info("%s > Created observer for %s", self.__class__.__name__, self.file)
+        info("%s > Created observer for \"%s\"", self.__class__.__name__, self.file)
         
     def start(self):
         self.observer.start()
-        info("%s > Watching for changes in %s", self.__class__.__name__, self.file)
+        info("%s > Watching for changes in \"%s\"", self.__class__.__name__, self.file)
     
     def onPathsFileModified(self, event):
         info("%s > Paths file has been modified, reloading paths...", self.__class__.__name__)
@@ -66,13 +66,14 @@ class IPCPathsWatcher(object):
                 for item in jsonstring:
                     ipcpath = IPCPath.from_dict(item)
                     count += 1
-                    for file in [ipcpath.request,ipcpath.response]:
-                        if file.check():
-                            paths.append(ipcpath)
-                            info("%s > paths[%i] %s", self.__class__.__name__, count, ipcpath)
-                        else: info("%s > Path %s does not exist, ignoring", self.__class__.__name__, ipcpath)
+                    if ipcpath.request.check() and ipcpath.response.check():
+                        paths.append(ipcpath)
+                        info("%s > paths[%i] %s", self.__class__.__name__, count, ipcpath)
+                    else:
+                        error("%s > Path %s does not exist, ignoring", self.__class__.__name__, ipcpath)
+                        break
         # self.paths = paths
-        info("%s > Loaded %i paths from %s", self.__class__.__name__, len(paths), file)
+        info("%s > Loaded %i paths from \"%s\"", self.__class__.__name__, len(paths), file)
         return paths
             
     def save(self, file=None, paths=None):

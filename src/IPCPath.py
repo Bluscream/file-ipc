@@ -4,15 +4,17 @@ from typing import Any
 from dataclasses import dataclass
 from enum import Enum, auto
 from logging import info, error, warning, debug
-
+from pprint import pprint
 
 class IPCFileType(Enum):
     UNKNOWN = auto()
     COMMANDS = auto()
-    PYTHON_CODE = auto()
+    PYTHON = auto()
     JSON = auto()
+    OS = auto()
     @staticmethod
     def from_string(string):
+        string = string.upper()
         return IPCFileType.__dict__[string]
         
 class IPCFileMode(Enum):
@@ -22,31 +24,28 @@ class IPCFileMode(Enum):
     APPEND = auto()
     @staticmethod
     def from_string(string):
+        string = string.upper()
         return IPCFileMode.__dict__[string]
 
 @dataclass
 class IPCFile:
-    path: Path
-    type: IPCFileType
-    mode: IPCFileMode
-
+    file: Path = None
+    type: IPCFileType = None
+    mode: IPCFileMode = None
+    def __init__(self, obj: Any):
+        self.file = Path(path.expandvars(str(obj.get("path"))))
+        self.type = IPCFileType.from_string(str(obj.get("type")))
+        self.mode = IPCFileMode.from_string(str(obj.get("mode")))
+    def __repr__(self):
+        return f"\"{self.file}\" ({self.type.name}, {self.mode.name})"
     def check(self):
-        if self.path.parent.exists() or access(self.path.parent, R_OK): return True
+        if self.file.parent.exists() or access(self.file.parent, R_OK): return True
         return False
 
-    @staticmethod
-    def from_dict(obj: Any) -> 'IPCFile':
-        _path = Path(path.expandvars(str(obj.get("path"))))
-        _type = IPCFileType.from_string(str(obj.get("type")))
-        _mode = IPCFileMode.from_string(str(obj.get("mode")))
-        return IPCFile(_path, _type, _mode)
-
-@dataclass
 class IPCRequestFile(IPCFile):
     def acknowledge(self):
-        self.path.unlink()
-        info("%s > Acknowledged IPC request from %s", self.__class__.__name__, self.path)
-@dataclass
+        self.file.unlink()
+        info("%s > Acknowledged IPC request from %s", self.__class__.__name__, self.file)
 class IPCResponseFile(IPCFile):
     pass
 
@@ -54,13 +53,15 @@ class IPCResponseFile(IPCFile):
 class IPCPath:
     request: IPCRequestFile
     response: IPCResponseFile
-
+    def same_dir(self):
+        return self.request.file.parent == self.response.file.parent
+    def __repr__(self):
+        return f"{self.request} -> {self.response}"
     @staticmethod
     def from_dict(obj: Any) -> 'IPCPath':
-        _request = IPCRequestFile.from_dict(obj.get("request"))
-        _response = IPCResponseFile.from_dict(obj.get("response"))
+        _request = IPCRequestFile(obj.get("request"))
+        _response = IPCResponseFile(obj.get("response"))
         return IPCPath(_request, _response)
-
 # Example Usage
 # jsonstring = json.loads(myjsonstring)
 # root = Root.from_dict(jsonstring)

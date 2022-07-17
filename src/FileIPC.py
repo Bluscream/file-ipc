@@ -3,6 +3,7 @@ from logging import INFO as LOGLEVEL_INFO
 from logging import DEBUG as LOGLEVEL_DEBUG
 from src.IPCPaths import IPCPathsWatcher
 from src.FileIPCWatcher import FileIPCWatcher
+from src.IPCPath import IPCPath
 
 class FileIPC():
     pathswatcher: IPCPathsWatcher
@@ -15,9 +16,11 @@ class FileIPC():
         self.start()
     
     def create(self):
-        for (dir, request_file, response_file) in self.pathswatcher.paths:
-            try: self.watchers.append(FileIPCWatcher(dir, request_file, response_file))
-            except Exception as ex: error("[ERROR] %s > Failed to create watcher for %s [%s] (%s)", self.__class__.__name__, dir, ', '.join([request_file, response_file]), ex)
+        ipcpath: IPCPath
+        for ipcpath in self.pathswatcher.paths:
+            self.watchers.append(FileIPCWatcher(ipcpath))
+            # try:
+            # except Exception as ex: error("[ERROR] %s > Failed to create watcher for %s (%s)", self.__class__.__name__, ipcpath, ex)
         info("%s > Created new instance with %i watchers", self.__class__.__name__, len(self.watchers))
     
     def start(self): info("%s > Started", self.__class__.__name__)
