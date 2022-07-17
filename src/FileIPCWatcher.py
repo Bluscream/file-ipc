@@ -74,8 +74,8 @@ class FileIPCWatcher():
                         response = eval(request)  # self.eval_template.format(request)
                     except:
                         info("%s > Executing PYTHON request from %s", self.__class__.__name__, self.path.request)
-                        ret = None;
-                        globals = {ret: ""};
+                        ret = None
+                        globals = {ret: ""}
                         locals = {ret: ""}
                         # with open(self.path.request.file, "rb") as source_file:
                         #     code = compile(source_file.read(), self.path.request.file, "exec")
