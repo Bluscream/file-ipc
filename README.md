@@ -1,4 +1,4 @@
-# File Based Tool for Inter-process communication
+# File Based Tool for Inter-process communication in sandboxed environments with file access
 
 Add your watched directories to `C:\ipc.paths` like so;
 You can find a list of modes and types in
