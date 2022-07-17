@@ -3,11 +3,19 @@ from logging import info, error, warning, debug
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from src.IPCPath import IPCRequestFile, IPCResponseFile
+from src.IPCPaths import IPCPath
 
-class FileIPCWatcher(object):
-    # directory: Path
-    request_file: Path
-    response_file: Path
+class IPCRequestWatcher(IPCRequestFile):
+    def __init__():
+        super.__call__()
+    pass
+
+class IPCResponseWatcher(IPCResponseFile):
+    pass
+
+class FileIPCWatcher():
+    path: IPCPath
     observer: Observer
     event_handler: FileSystemEventHandler
     working = False
@@ -16,15 +24,15 @@ class FileIPCWatcher(object):
     eval_template =\
 """%s"""
     
-    def __init__(self, dir: Path, request_file, response_file) -> None:
+    def __init__(self, path: Path) -> None:
+        super.__call__() # Todo
         info("%s > Initializing FileIPCWatcher for directory %s [%s]", self.__class__.__name__, dir, ', '.join([request_file, response_file]))
         self.create(dir, request_file, response_file)
         self.start()
     
-    def create(self, dir, request_file="request.ipc", response_file="response.ipc"):
+    def create(self, path):
         # self.directory = dir
-        self.request_file = dir.joinpath(request_file)
-        self.response_file = dir.joinpath(response_file)
+        self.path = path
         self.observer = Observer()
         self.event_handler = FileSystemEventHandler()
         self.event_handler.on_created = self.on_created
@@ -50,6 +58,8 @@ class FileIPCWatcher(object):
             response = None
             info("%s > Parsed IPC request from %s", self.__class__.__name__, file)
             debug("\"%s\"", request)
+            file.unlink()
+            info("%s > Acknowledged IPC request from %s", self.__class__.__name__, file)
             try: response = eval(request) # self.eval_template.format(request)
             except:
                 ret = None; globals = {ret: ""}; locals = {}
@@ -66,11 +76,8 @@ class FileIPCWatcher(object):
                 # print("=== LOCALS END ===")
                 try: response = locals["ret"] # if hasattr(locals, "files"):
                 except Exception as ex: print(ex) 
-            file.unlink()
             with self.response_file.open("w") as f:
                 f.write(str(response).strip())
-            info("%s > Acknowledged IPC request from %s", self.__class__.__name__, file)
-            debug("\"%s\"", request)
             if self.queue and len(self.queue) > 0: self.handle_ipc(self.queue.pop(0))
         except Exception as ex:
             error("%s > Error handling IPC request from %s (%s)", self.__class__.__name__, file, ex)

@@ -1,27 +1,14 @@
 from os import getenv, path, access, R_OK
 from logging import info
 from pathlib import Path
+import json
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
-class IPCPath():
-    request_file: Path
-    response_file: Path
-    
-    def __init__(self, *args, **kwargs):
-        self.path = Path(*args, **kwargs)
-
-    @staticmethod
-    def from_line(self, line: str) -> None:
-        line = line.split(";")
-        ret = Path([0])
-        ret.request_file = ret.joinpath(line[1] if len(line) > 1 else "request.ipc")
-        ret.response_file = ret.joinpath(line[2] if len(line) > 2 else "response.ipc")
-        return ret
+from IPCPath import IPCPath
 
 class IPCPathsWatcher(object):
     file: Path
-    paths: list[tuple[Path, str, str]]
+    paths: list[IPCPath]
     observer: Observer
     event_handler: FileSystemEventHandler
     
@@ -74,17 +61,16 @@ class IPCPathsWatcher(object):
         paths = []
         if file.exists():
             with self.file.open("r") as f:
+                jsonstring = json.load(f)
                 count = 0
-                for line in f: # f.read().splitlines()
+                for item in jsonstring:
+                    ipcpath = IPCPath.from_dict(item)
                     count += 1
-                    line = path.expandvars(line.strip()).split(";")
-                    dir = Path(line[0])
-                    request_file = line[1] if len(line) > 1 else "request.ipc"
-                    response_file = line[2] if len(line) > 2 else "response.ipc"
-                    if dir.exists() or access(dir, R_OK):
-                        paths.append((dir, request_file, response_file))
-                        info("%s > paths[%i] %s", self.__class__.__name__, count, line)
-                    else: info("%s > Path %s does not exist, ignoring", self.__class__.__name__, line)
+                    for file in [ipcpath.request,ipcpath.response]:
+                        if file.check():
+                            paths.append(ipcpath)
+                            info("%s > paths[%i] %s", self.__class__.__name__, count, ipcpath)
+                        else: info("%s > Path %s does not exist, ignoring", self.__class__.__name__, ipcpath)
         # self.paths = paths
         info("%s > Loaded %i paths from %s", self.__class__.__name__, len(paths), file)
         return paths
@@ -92,5 +78,4 @@ class IPCPathsWatcher(object):
     def save(self, file=None, paths=None):
         file = file or self.file
         paths = paths or self.paths
-        with file.open("w") as f:
-            f.write("\n".join(paths))
+        raise Exception("Not implemented")
