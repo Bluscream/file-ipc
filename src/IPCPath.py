@@ -1,10 +1,10 @@
-from pathlib import Path
-from os import getenv, path, access, R_OK
-from typing import Any
 from dataclasses import dataclass
 from enum import Enum, auto
-from logging import info, error, warning, debug
-from pprint import pprint
+from logging import info
+from os import path, access, R_OK
+from pathlib import Path
+from typing import Any
+
 
 class IPCFileType(Enum):
     UNKNOWN = auto()
@@ -12,6 +12,7 @@ class IPCFileType(Enum):
     PYTHON = auto()
     JSON = auto()
     OS = auto()
+
     @staticmethod
     def from_string(string):
         string = string.upper()
@@ -34,8 +35,14 @@ class IPCFile:
     mode: IPCFileMode = None
     def __init__(self, obj: Any):
         self.file = Path(path.expandvars(str(obj.get("path"))))
-        self.type = IPCFileType.from_string(str(obj.get("type")))
-        self.mode = IPCFileMode.from_string(str(obj.get("mode")))
+        if not obj.get("type"):
+            self.type = IPCFileType.UNKNOWN
+        else:
+            self.type = IPCFileType.from_string(str(obj.get("type")))
+        if not obj.get("mode"):
+            self.mode = IPCFileMode.UNKNOWN
+        else:
+            self.mode = IPCFileMode.from_string(str(obj.get("mode")))
     def __repr__(self):
         return f"\"{self.file}\" ({self.type.name}, {self.mode.name})"
     def check(self):

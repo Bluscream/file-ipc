@@ -1,16 +1,17 @@
-from logging import basicConfig, info, error
-from logging import INFO as LOGLEVEL_INFO
-from logging import DEBUG as LOGLEVEL_DEBUG
-from src.IPCPaths import IPCPathsWatcher
+import logging
+from logging import info
+
 from src.FileIPCWatcher import FileIPCWatcher
 from src.IPCPath import IPCPath
+from src.IPCPaths import IPCPathsWatcher
+
 
 class FileIPC():
     pathswatcher: IPCPathsWatcher
     watchers: list[FileIPCWatcher] = []
-    
+
     def __init__(self) -> None:
-        basicConfig(level=LOGLEVEL_INFO, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         self.pathswatcher = IPCPathsWatcher()
         self.create()
         self.start()

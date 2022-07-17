@@ -1,10 +1,16 @@
-from time import sleep
-from logging import info, error, warning, debug
+import subprocess
+from logging import info, error, debug
 from pathlib import Path
-from watchdog.observers import Observer
+from pprint import pformat
+from time import sleep
+
 from watchdog.events import FileSystemEventHandler
-from src.IPCPath import IPCRequestFile, IPCResponseFile
+from watchdog.observers import Observer
+
+from src.IPCPath import IPCFileType
 from src.IPCPaths import IPCPath
+from src.commands import commands
+
 
 # class IPCRequestWatcher(IPCRequestFile):
 #     def __init__(self):
@@ -13,6 +19,7 @@ from src.IPCPaths import IPCPath
 #
 # class IPCResponseWatcher(IPCResponseFile):
 #     pass
+
 
 class FileIPCWatcher():
     path: IPCPath
@@ -42,7 +49,7 @@ class FileIPCWatcher():
         
     def start(self):
         self.observer.start()
-        if self.path.request.file.exists(): self.handle_ipc(self.path.request)
+        if self.path.request.file.exists(): self.handle_ipc()
     def stop(self):
         self.observer.stop()
         self.observer.join()
@@ -52,35 +59,47 @@ class FileIPCWatcher():
         self.working = True
         try:
             request = None
-            with self.path.request.file.open("r") as f: request = f.read().strip()
+            with self.path.request.file.open("r") as f:
+                request = f.read().strip()
             if not request: return
             response = None
             info("%s > Parsed IPC request from %s", self.__class__.__name__, self.path.request)
             debug("\"%s\"", request)
-            self.path.request.file.unlink()
-            info("%s > Acknowledged IPC request from %s", self.__class__.__name__, self.path.request)
-            try: response = eval(request) # self.eval_template.format(request)
-            except:
-                ret = None; globals = {"ret": ""}; locals = {}
-                with open(self.path.request.file, "rb") as source_file:
-                    code = compile(source_file.read(), self.path.request.file, "exec")
-                exec(code, globals, locals)
-                # print("=== GLOBALS START ===")
-                # try: pprint.pprint(globals)
-                # except Exception as ex: print(ex)
-                # print("=== LOCALS END ===")
-                # print("=== LOCALS START ===")
-                # try: pprint.pprint(locals)
-                # except Exception as ex: print(ex)
-                # print("=== LOCALS END ===")
-                try: response = locals["ret"] # if hasattr(locals, "files"):
-                except Exception as ex: print(ex) 
+            self.path.request.acknowledge()
+            # debug("self.path.request.type:", self.path.request.type.name, "==", IPCFileType.PYTHON.name, ":", self.path.request.type == IPCFileType.PYTHON)
+            match self.path.request.type.name:
+                case IPCFileType.PYTHON.name:
+                    try:
+                        info("%s > Evaluating PYTHON request from %s", self.__class__.__name__, self.path.request)
+                        response = eval(request)  # self.eval_template.format(request)
+                    except:
+                        info("%s > Executing PYTHON request from %s", self.__class__.__name__, self.path.request)
+                        ret = None;
+                        globals = {ret: ""};
+                        locals = {ret: ""}
+                        # with open(self.path.request.file, "rb") as source_file:
+                        #     code = compile(source_file.read(), self.path.request.file, "exec")
+                        exec(request, globals, locals)
+                        try:
+                            response = globals["ret"] or locals["ret"]
+                            debug("=== GLOBALS START ===" + "\n" + pformat(globals) + "\n" + "=== GLOBALS END ===")
+                            debug("=== LOCALS START ===" + "\n" + pformat(locals) + "\n" + "=== LOCALS END ===")
+                        except Exception as ex:
+                            error(ex)
+                case IPCFileType.COMMANDS.name:
+                    info("%s > Executing COMMAND request from %s", self.__class__.__name__, self.path.request)
+                    response = commands.handle(request)
+                case IPCFileType.OS.name:
+                    info("%s > Executing OS request from %s", self.__class__.__name__, self.path.request)
+                    response = subprocess.check_output(request, shell=True).decode("utf-8")
+                case _:
+                    error("UNKNOWN IPC request type: %s", self.path.request.type.name)
             with self.path.response.file.open("w") as f:
                 f.write(str(response).strip())
             if self.queue and len(self.queue) > 0: self.handle_ipc(self.queue.pop(0))
         except Exception as ex:
             error("%s > Error handling IPC request from %s (%s)", self.__class__.__name__, self.path.request, ex)
-            self.path.request.file.unlink()
+            self.path.request.file.exists() and self.path.request.file.unlink()
         self.working = False
 
     def on_created(self, event):
@@ -88,7 +107,7 @@ class FileIPCWatcher():
         if file == self.path.request.file:
             info("%s > Recieved new IPC Request from %s, processing in %ims", self.__class__.__name__, file, self.delay_ms)
             sleep(self.delay_ms / 1000)
-            self.handle_ipc(file)
+            self.handle_ipc()
         elif file == self.path.response.file:
             info("%s > %s has been created", self.__class__.__name__, self.path.response)
     def on_deleted(self, event):
