@@ -1,2 +1,2 @@
 typing~=3.10.0.0
-watchdog~=3.0.0
+watchdog~=4.0.1
